@@ -10,8 +10,9 @@ async function createBook(req, res) {
     if (Object.keys(data).length == 0) {
       return res
         .status(400)
-        .send({ status: false, message: "require som data" });
+        .send({ status: false, message: "require data" });
     }
+
     let requiredKeys = [
       "title",
       "excerpt",
@@ -28,6 +29,7 @@ async function createBook(req, res) {
           .send({ status: false, message: `${field} is required` });
       }
     }
+
     const requiredFields = [
       "title",
       "excerpt",
@@ -44,19 +46,23 @@ async function createBook(req, res) {
           .send({ status: false, message: `${field} is invalid` });
       }
     }
+
     const document = await bookModel.findOne({ title: data.title });
     if (document) {
       return res
         .status(400)
         .send({ status: false, message: "title is already exists" });
     }
+
     const userDocument = await userModel.findOne({ _id: data.userId });
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "user not found" });
     }
+
     if (!checkISBN(data.ISBN)) {
       return res.status(400).send({ status: false, message: "invalid ISBN" });
     }
+
     const bookDocument = await bookModel.findOne({ ISBN: data.ISBN });
     if (bookDocument) {
       return res
@@ -82,6 +88,7 @@ let fetchbooks = async function (req, res) {
         .status(400)
         .send({ status: false, message: "required alteast one query" });
     }
+
     const requiredFields=["userId","category","subcategory"]
     for(key in data){
         if(!requiredFields.includes(key)){
@@ -91,6 +98,7 @@ let fetchbooks = async function (req, res) {
         }
     }
     data.isDeleted = false;
+
     let getDocs = await bookModel
       .find(data)
       .select({
@@ -103,6 +111,7 @@ let fetchbooks = async function (req, res) {
         reviews: 1,
       })
       .sort({ title: 1 });
+
     if (getDocs.length == 0) {
       return res
         .status(404)
@@ -126,6 +135,7 @@ const getBooks = async function (req, res) {
         .status(400)
         .send({ status: false, message: "bookId is required" });
     }
+
     let savedData = await bookModel.findOne({ _id: id }).lean();
     if (!savedData) {
       return res

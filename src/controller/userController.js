@@ -17,10 +17,9 @@ const createUser = async function (req, res) {
     let data = req.body;
     //  console.log(data)
     if (Object.keys(data).length == 0) {
-      return res
-        .status(400)
-        .send({ status: false, message: "require som data" });
+      return res.status(400).send({ status: false, message: "require data" });
     }
+
     let requiredKeys = ["title", "name", "email", "password"];
     for (field of requiredKeys) {
       if (!data.hasOwnProperty(field)) {
@@ -29,8 +28,8 @@ const createUser = async function (req, res) {
           .send({ status: false, message: `${field} is required` });
       }
     }
-    let titleFeilds = ["Mr", "Mrs", "Miss"];
 
+    let titleFeilds = ["Mr", "Mrs", "Miss"];
     if (!titleFeilds.includes(data.title))
       return res.status(400).send({
         status: false,
@@ -38,17 +37,20 @@ const createUser = async function (req, res) {
       });
 
     const requiredFields = ["title", "name", "email", "password"];
-    for (field of requiredFields) //console.log(typeof data[field])
+    for (field of requiredFields) { //console.log(typeof data[field])
       if (!isValid(data[field])) {
         return res
           .status(400)
           .send({ status: false, message: `${field} is invalid` });
       }
+    }
+
     if (!checkname(data.name)) {
       return res
         .status(400)
         .send({ status: false, message: "name is invalid" });
     }
+
     if (data.hasOwnProperty("address")) {
       const addressKeys = ["street", "city", "pincode"];
       for (field of addressKeys)
@@ -57,6 +59,7 @@ const createUser = async function (req, res) {
             .status(400)
             .send({ status: false, message: `${field} is invalid` });
         }
+
       if (!isValidPincode(data.address.pincode)) {
         return res
           .status(400)
@@ -69,6 +72,7 @@ const createUser = async function (req, res) {
         .status(400)
         .send({ status: false, message: "invalid phone number" });
     }
+
     let checkMobile = await userModel.findOne({ phone: data.phone });
     if (checkMobile) {
       return res
@@ -81,6 +85,7 @@ const createUser = async function (req, res) {
         .status(400)
         .send({ status: false, message: "invalid emailId" });
     }
+
     let checkEmail = await userModel.findOne({ email: data.email });
     if (checkEmail) {
       return res
@@ -136,6 +141,7 @@ async function login(req, res) {
         .status(400)
         .send({ status: false, message: "email or password is incorrect" });
     }
+    
     const token = jwt.sign(
       {
         userId: document._id,
