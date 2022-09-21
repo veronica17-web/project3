@@ -11,5 +11,5 @@ router.get("/test-me", function (req, res) {
 router.post("/register", userController.createUser);
 router.post("/login", userController.login);
 router.post("/books",authContoller.authentication,authContoller.authorization, bookController.createBook);
-
+router.get("/books",authContoller.authentication,bookController.fetchbooks)
 module.exports = router;
