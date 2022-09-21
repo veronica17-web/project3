@@ -78,7 +78,7 @@ async function createBook(req, res) {
         .status(400)
         .send({ status: false, message: "required alteast one query" });}
         data.isDeleted=false
-        let getDocs = await bookModel.find(data).select({ _id:1,title:1, excerpt:1, userId:1, category:1, releasedAt:1, reviews:1})
+        let getDocs = await bookModel.find(data).select({ _id:1,title:1, excerpt:1, userId:1, category:1, releasedAt:1, reviews:1}).sort({title:1})
          if(getDocs.length==0){
             return res.status(404).send({ status: false, message: "No documents founded" });
          } 

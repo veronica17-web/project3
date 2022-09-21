@@ -13,7 +13,7 @@ async function authentication(req, res, next) {
       if (err) {
         return res
           .status(400)
-          .send({ status: false, message: "required token" });
+          .send({ status: false, message: "invalid token" });
       } else {
         req.decoded = decoded;
         next();
