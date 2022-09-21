@@ -83,11 +83,11 @@ async function createBook(req, res) {
 let fetchbooks = async function (req, res) {
   try {
     let data = req.query;
-    if (Object.keys(data).length == 0) {
-      return res
-        .status(400)
-        .send({ status: false, message: "required alteast one query" });
-    }
+    // if (Object.keys(data).length == 0) {
+    //   return res
+    //     .status(400)
+    //     .send({ status: false, message: "required alteast one query" });
+    // }
 
     const requiredFields=["userId","category","subcategory"]
     for(key in data){
