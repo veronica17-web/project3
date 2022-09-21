@@ -1,4 +1,3 @@
-const { findOne } = require("../models/userModel");
 const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 
@@ -21,9 +20,19 @@ const isValidEmail = function (data) {
   return emailRegex.test(data);
 };
 
+const isValidPincode = function (data) {
+  const pincodeRegex = /^[0-9]{6}$/;
+  return pincodeRegex.test(data);
+};
+
 function checkPassword(str) {
   var re = /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,16}$/;
   return re.test(str);
+}
+
+function checkname(str) {
+  var nameRegex = /^[A-Z a-z]+$/;
+  return nameRegex.test(str);
 }
 
 const createUser = async function (req, res) {
@@ -34,6 +43,14 @@ const createUser = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "require som data" });
+    }
+    let requiredKeys = ["title", "name", "email", "password"];
+    for (field of requiredKeys) {
+      if (!data.hasOwnProperty(field)) {
+        return res
+          .status(400)
+          .send({ status: false, message: `${field} is required` });
+      }
     }
     let titleFeilds = ["Mr", "Mrs", "Miss"];
 
@@ -48,16 +65,27 @@ const createUser = async function (req, res) {
       if (!isValid(data[field])) {
         return res
           .status(400)
-          .send({ status: false, message: `${field} is required` });
+          .send({ status: false, message: `${field} is invalid` });
       }
-
-    const addressKeys = ["street", "city", "pincode"];
-    for (field of addressKeys)
-      if (!isValid(data.address[field])) {
+    if (!checkname(data.name)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "name is invalid" });
+    }
+    if (data.hasOwnProperty("address")) {
+      const addressKeys = ["street", "city", "pincode"];
+      for (field of addressKeys)
+        if (!isValid(data.address[field])) {
+          return res
+            .status(400)
+            .send({ status: false, message: `${field} is invalid` });
+        }
+      if (!isValidPincode(data.address.pincode)) {
         return res
           .status(400)
-          .send({ status: false, message: `${field} is required` });
+          .send({ status: false, message: "pincode is invalid" });
       }
+    }
 
     if (!isMobileNumber(data.phone)) {
       return res
@@ -106,7 +134,7 @@ async function login(req, res) {
     if (Object.keys(data).length == 0) {
       return res
         .status(400)
-        .send({ status: false, message: "require som data" });
+        .send({ status: false, message: "require some data" });
     }
 
     const requiredFields = ["email", "password"];
@@ -133,7 +161,7 @@ async function login(req, res) {
       {
         userId: document._id,
         batch: "plutonium",
-      },
+      },configGeneral.JWT, { expiresIn: '1h' },
       "plutonium_project3"
     );
     return res.status(201).send({ status: true, msg: "success", token: token });
