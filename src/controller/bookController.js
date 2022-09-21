@@ -2,6 +2,8 @@ const userModel = require("../models/userModel");
 const bookModel = require("../models/bookModel");
 const { isValid, checkISBN } = require("../validation/validator");
 
+//===============================createBook========================================//
+
 async function createBook(req, res) {
   try {
     const data = req.body;
@@ -70,8 +72,8 @@ async function createBook(req, res) {
     return res.status(500).send({ status: false, msg: error.message });
   }
 }
-//===============================================================================================
-// _id, title, excerpt, userId, category, releasedAt, reviews field
+//===============================fetchbooks========================================//
+
 let fetchbooks = async function (req, res) {
   try {
     let data = req.query;
@@ -79,6 +81,14 @@ let fetchbooks = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "required alteast one query" });
+    }
+    const requiredFields=["userId","category","subcategory"]
+    for(key in data){
+        if(!requiredFields.includes(key)){
+            return res
+        .status(400)
+        .send({ status: false, message:`filters must be among ${requiredFields.join(", ")}`});
+        }
     }
     data.isDeleted = false;
     let getDocs = await bookModel
@@ -105,6 +115,8 @@ let fetchbooks = async function (req, res) {
     return res.status(500).send({ status: false, msg: error.message });
   }
 };
+
+//===============================getBooks========================================//
 
 const getBooks = async function (req, res) {
   try {
