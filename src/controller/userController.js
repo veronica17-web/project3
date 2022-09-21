@@ -37,7 +37,8 @@ const createUser = async function (req, res) {
       });
 
     const requiredFields = ["title", "name", "email", "password"];
-    for (field of requiredFields) { //console.log(typeof data[field])
+    for (field of requiredFields) {
+      //console.log(typeof data[field])
       if (!isValid(data[field])) {
         return res
           .status(400)
@@ -141,7 +142,7 @@ async function login(req, res) {
         .status(400)
         .send({ status: false, message: "email or password is incorrect" });
     }
-    
+
     const token = jwt.sign(
       {
         userId: document._id,

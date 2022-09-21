@@ -33,9 +33,9 @@ function checkname(str) {
 }
 
 function checkISBN(str) {
-    var ISBNRegex = /^[\d*\-]{13}$/;
-    return ISBNRegex.test(str);
-  }
+  var ISBNRegex = /^[\d*\-]{13}$/;
+  return ISBNRegex.test(str);
+}
 
 module.exports = {
   isValid,
@@ -44,5 +44,5 @@ module.exports = {
   isValidPincode,
   checkPassword,
   checkname,
-  checkISBN
+  checkISBN,
 };

@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const userModel = require("../models/userModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -12,7 +13,7 @@ async function authentication(req, res, next) {
     jwt.verify(token, "plutonium_project3", (err, decoded) => {
       if (err) {
         return res
-          .status(400)
+          .status(401)
           .send({ status: false, message: "invalid token" });
       } else {
         req.decoded = decoded;
@@ -27,6 +28,16 @@ async function authentication(req, res, next) {
 async function authorization(req, res, next) {
   try {
     const userId = req.decoded.userId;
+    const data = req.body;
+    if (Object.keys(data).length == 0) {
+      return res.status(400).send({ status: false, message: "require data" });
+    }
+
+    const userDocument = await userModel.findOne({ _id: data.userId });
+    if (!userDocument) {
+      return res.status(404).send({ status: false, message: "user not found" });
+    }
+
     const Id = req.body.userId;
     if (!ObjectId.isValid(Id)) {
       return res.status(400).send({ status: false, message: "invalid userId" });

@@ -1,17 +1,14 @@
 const userModel = require("../models/userModel");
 const bookModel = require("../models/bookModel");
 const { isValid, checkISBN } = require("../validation/validator");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 //===============================createBook========================================//
 
 async function createBook(req, res) {
   try {
     const data = req.body;
-    if (Object.keys(data).length == 0) {
-      return res
-        .status(400)
-        .send({ status: false, message: "require data" });
-    }
 
     let requiredKeys = [
       "title",
@@ -54,11 +51,6 @@ async function createBook(req, res) {
         .send({ status: false, message: "title is already exists" });
     }
 
-    const userDocument = await userModel.findOne({ _id: data.userId });
-    if (!userDocument) {
-      return res.status(404).send({ status: false, message: "user not found" });
-    }
-
     if (!checkISBN(data.ISBN)) {
       return res.status(400).send({ status: false, message: "invalid ISBN" });
     }
@@ -89,29 +81,29 @@ let fetchbooks = async function (req, res) {
     //     .send({ status: false, message: "required alteast one query" });
     // }
 
-    const requiredFields=["userId","category","subcategory"]
-    for(key in data){
-        if(!requiredFields.includes(key)){
-            return res
-        .status(400)
-        .send({ status: false, message:`filters must be among ${requiredFields.join(", ")}`});
-        }
+    const requiredFields = ["userId", "category", "subcategory"];
+    for (key in data) {
+      if (!requiredFields.includes(key)) {
+        return res.status(400).send({
+          status: false,
+          message: `filters must be among ${requiredFields.join(", ")}`,
+        });
+      }
     }
     data.isDeleted = false;
 
-    let getDocs = await bookModel
-      .find(data)
-      .select({
-        _id: 1,
-        title: 1,
-        excerpt: 1,
-        userId: 1,
-        category: 1,
-        releasedAt: 1,
-        reviews: 1,
-      })
-      .sort({ title: 1 });
-
+    let getDocs = await bookModel.find(data).select({
+      _id: 1,
+      title: 1,
+      excerpt: 1,
+      userId: 1,
+      category: 1,
+      releasedAt: 1,
+      reviews: 1,
+    });
+    getDocs.sort((a, b) =>
+      a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+    );
     if (getDocs.length == 0) {
       return res
         .status(404)
@@ -119,7 +111,7 @@ let fetchbooks = async function (req, res) {
     }
     return res
       .status(200)
-      .send({ status: true, msg: "success", data: getDocs });
+      .send({ status: true, msg: "Books list", data: getDocs });
   } catch (error) {
     return res.status(500).send({ status: false, msg: error.message });
   }
@@ -136,6 +128,10 @@ const getBooks = async function (req, res) {
         .send({ status: false, message: "bookId is required" });
     }
 
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ status: false, message: "invalid bookId" });
+    }
+
     let savedData = await bookModel.findOne({ _id: id }).lean();
     if (!savedData) {
       return res
@@ -145,7 +141,7 @@ const getBooks = async function (req, res) {
     savedData.reviewsData = [];
     return res
       .status(200)
-      .send({ status: true, msg: "success", data: savedData });
+      .send({ status: true, msg: "Books list", data: savedData });
   } catch (error) {
     return res.status(500).send({ status: false, msg: error.message });
   }
