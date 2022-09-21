@@ -1,5 +1,6 @@
 const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+// const configGeneral = require("config");
 
 const isValid = function (value) {
   //if(typeof value ==="undefined"|| value===null) return false;
@@ -161,7 +162,8 @@ async function login(req, res) {
       {
         userId: document._id,
         batch: "plutonium",
-      },configGeneral.JWT, { expiresIn: '1h' },
+        exp: Math.floor(Date.now() / 1000) + 60 * 60,
+      },
       "plutonium_project3"
     );
     return res.status(201).send({ status: true, msg: "success", token: token });
