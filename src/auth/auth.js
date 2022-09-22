@@ -53,9 +53,10 @@ async function authorization(req, res, next) {
 
     const Id = req.body.userId;
     if (!ObjectId.isValid(Id)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "Given userId is an invalid ObjectId" });
+      return res.status(400).send({
+        status: false,
+        message: "Given userId is an invalid ObjectId",
+      });
     }
 
     const userDocument = await userModel.findOne({ _id: data.userId });
@@ -80,14 +81,24 @@ async function authorization1(req, res, next) {
   try {
     const userId = req.decoded.userId;
     const Id = req.params.bookId;
+
+    const errors = [];
+
     if (Id === ":bookId") {
-      return res
-        .status(400)
-        .send({ status: false, message: "bookId is required" });
+      errors.push("bookId is required");
     }
 
-    if (!ObjectId.isValid(Id)) {
-      return res.status(400).send({ status: false, message: "invalid bookId" });
+    if (Id !== ":bookId") {
+      if (!ObjectId.isValid(Id)) {
+        errors.push("Given bookId is an invalid ObjectId");
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
     }
 
     const userDocument = await bookModel.findOne({ _id: Id, isDeleted: false });

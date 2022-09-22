@@ -15,7 +15,7 @@ const {
 const createUser = async function (req, res) {
   try {
     let data = req.body;
-    //  console.log(data)
+
     if (Object.keys(data).length == 0) {
       return res.status(400).send({ status: false, message: "require data" });
     }
@@ -55,26 +55,22 @@ const createUser = async function (req, res) {
     if (data.hasOwnProperty("address")) {
       const addressKeys = ["street", "city", "pincode"];
       for (field of addressKeys) {
-        if (data.address.hasOwnProperty(field))
+        if (data.address.hasOwnProperty(field)) {
           if (!isValid(data.address[field])) {
-            if (field === "pincode") {
-              if (!isValidPincode(data.address.pincode)) {
-                return res
-                  .status(400)
-                  .send({ status: false, message: `${field} is invalid` });
-              }
-            }
             return res
               .status(400)
               .send({ status: false, message: `${field} is invalid` });
           }
+          if (field === "pincode") {
+            if (!isValidPincode(data.address[field])) {
+              return res.status(400).send({
+                status: false,
+                message: `${field} must be in six digit`,
+              });
+            }
+          }
+        }
       }
-
-      // if (!isValidPincode(data.address.pincode)) {
-      //   return res
-      //     .status(400)
-      //     .send({ status: false, message: "pincode is invalid" });
-      // }
     }
 
     if (!isMobileNumber(data.phone)) {
@@ -128,7 +124,7 @@ async function login(req, res) {
     if (Object.keys(data).length == 0) {
       return res
         .status(400)
-        .send({ status: false, message: "require some data" });
+        .send({ status: false, message: "required email and password" });
     }
 
     const requiredFields = ["email", "password"];
@@ -139,7 +135,7 @@ async function login(req, res) {
           .send({ status: false, message: `${field} is required` });
       }
     }
-    for (field of requiredFields) //console.log(typeof data[field])
+    for (field of requiredFields)
       if (!isValid(data[field])) {
         return res
           .status(400)

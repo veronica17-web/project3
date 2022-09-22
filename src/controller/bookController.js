@@ -79,11 +79,6 @@ async function createBook(req, res) {
 let fetchbooks = async function (req, res) {
   try {
     let data = req.query;
-    // if (Object.keys(data).length == 0) {
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, message: "required alteast one query" });
-    // }
 
     const requiredFields = ["userId", "category", "subcategory"];
     for (key in data) {
@@ -133,7 +128,10 @@ const getBooks = async function (req, res) {
     }
 
     if (!ObjectId.isValid(id)) {
-      return res.status(400).send({ status: false, message: "invalid bookId" });
+      return res.status(400).send({
+        status: false,
+        message: "Given bookId is an invalid ObjectId",
+      });
     }
 
     let savedData = await bookModel.findOne({ _id: id }).lean();
@@ -169,35 +167,39 @@ async function updateBook(req, res) {
         });
       }
     }
-    const Fields = ["title", "ISBN"];
+
+    const errors = [];
+    
+    const Fields = ["title", "ISBN", "releasedAt"];
     for (field of Fields) {
       if (data.hasOwnProperty(field)) {
-        if (field === "releasedAt") {
-          if (!checkDate(data.releasedAt)) {
-            return res.status(400).send({
-              status: false,
-              message: "Date format must be in YYYY-MM-DD",
-            });
-          }
-        }
         if (field === "ISBN") {
           if (!checkISBN(data.ISBN)) {
-            return res
-              .status(400)
-              .send({ status: false, message: "invalid ISBN" });
+            errors.push("invalid ISBN");
           }
+        }
+        if (field === "releasedAt") {
+          if (!checkDate(data.releasedAt)) {
+            errors.push("Date format must be in YYYY-MM-DD");
+          }
+          continue;
         }
         const emp = {};
         emp[field] = data[field];
         const document = await bookModel.findOne(emp);
         if (document) {
-          return res
-            .status(400)
-            .send({ status: false, message: `${field} is already exists` });
+          errors.push(`${field} is already exists`);
         }
       }
     }
-    
+
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
+    }
+
     const updateBook = await bookModel.findByIdAndUpdate(
       { _id: Id, isDeleted: false },
       data,
