@@ -64,7 +64,6 @@ async function authorization1(req, res, next) {
   try {
     const userId = req.decoded.userId;
     const Id = req.params.bookId;
-    console.log(Id);
     if (Id === ":bookId") {
       return res
         .status(400)

@@ -163,7 +163,16 @@ async function updateBook(req, res) {
       return res.status(400).send({ status: false, message: "require data" });
     }
     const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
-    for (field of requiredFields) {
+    for (key in data) {
+      if (!requiredFields.includes(key)) {
+        return res.status(400).send({
+          status: false,
+          message: `keys must be among ${requiredFields.join(", ")} to update`,
+        });
+      }
+    }
+    const Fields = ["title", "ISBN"];
+    for (field of Fields) {
       if (data.hasOwnProperty(field)) {
         if (field === "releasedAt") {
           if (!checkDate(data.releasedAt)) {
@@ -190,6 +199,7 @@ async function updateBook(req, res) {
         }
       }
     }
+    
     const updateBook = await bookModel.findByIdAndUpdate(
       { _id: Id, isDeleted: false },
       data,
