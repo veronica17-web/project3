@@ -37,7 +37,12 @@ async function authorization(req, res, next) {
     if (Object.keys(data).length == 0) {
       return res.status(400).send({ status: false, message: "require data" });
     }
-
+      if (!data.userId) {
+        return res
+          .status(400)
+          .send({ status: false, message:  " userId is required" });
+      }
+    
     const userDocument = await userModel.findOne({ _id: data.userId });
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "user not found" });
