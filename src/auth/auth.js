@@ -3,6 +3,7 @@ const userModel = require("../models/userModel");
 const mongoose = require("mongoose");
 const bookModel = require("../models/bookModel");
 const ObjectId = mongoose.Types.ObjectId;
+const { isValid } = require("../validation/validator");
 
 //===========================authentication======================================//
 
@@ -37,21 +38,31 @@ async function authorization(req, res, next) {
     if (Object.keys(data).length == 0) {
       return res.status(400).send({ status: false, message: "require data" });
     }
-      if (!data.userId) {
-        return res
-          .status(400)
-          .send({ status: false, message:  " userId is required" });
-      }
+
+    if (!data.hasOwnProperty("userId")) {
+      return res
+        .status(400)
+        .send({ status: false, message: "userId is required" });
+    }
+
+    if (!isValid(data.userId)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "userId is invalid" });
+    }
     
+    const Id = req.body.userId;
+    if (!ObjectId.isValid(Id)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "invalid ObjectId" });
+    }
+
     const userDocument = await userModel.findOne({ _id: data.userId });
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "user not found" });
     }
 
-    const Id = req.body.userId;
-    if (!ObjectId.isValid(Id)) {
-      return res.status(400).send({ status: false, message: "invalid userId" });
-    }
     if (userId !== Id) {
       return res
         .status(403)

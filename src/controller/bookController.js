@@ -13,7 +13,6 @@ async function createBook(req, res) {
     let requiredKeys = [
       "title",
       "excerpt",
-      "userId",
       "ISBN",
       "category",
       "subcategory",
@@ -30,7 +29,6 @@ async function createBook(req, res) {
     const requiredFields = [
       "title",
       "excerpt",
-      "userId",
       "ISBN",
       "category",
       "subcategory",
