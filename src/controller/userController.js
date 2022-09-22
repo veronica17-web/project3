@@ -132,6 +132,13 @@ async function login(req, res) {
     }
 
     const requiredFields = ["email", "password"];
+    for (field of requiredFields) {
+      if (!data.hasOwnProperty(field)) {
+        return res
+          .status(400)
+          .send({ status: false, message: `${field} is required` });
+      }
+    }
     for (field of requiredFields) //console.log(typeof data[field])
       if (!isValid(data[field])) {
         return res
