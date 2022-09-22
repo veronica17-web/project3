@@ -42,7 +42,6 @@ function checkDate(str) {
   return dateRegex.test(str);
 }
 
-
 module.exports = {
   isValid,
   isMobileNumber,

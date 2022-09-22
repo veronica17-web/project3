@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const bookModel = require("../models/bookModel");
 const ObjectId = mongoose.Types.ObjectId;
 
+//===========================authentication======================================//
+
 async function authentication(req, res, next) {
   try {
     const token = req.headers["x-api-key"];
@@ -25,6 +27,8 @@ async function authentication(req, res, next) {
     return res.status(500).send({ status: false, msg: error.message });
   }
 }
+
+//===========================authorization======================================//
 
 async function authorization(req, res, next) {
   try {
@@ -54,11 +58,13 @@ async function authorization(req, res, next) {
   }
 }
 
+//===========================authorization1======================================//
+
 async function authorization1(req, res, next) {
   try {
     const userId = req.decoded.userId;
     const Id = req.params.bookId;
-    console.log(Id)
+    console.log(Id);
     if (Id === ":bookId" || Id) {
       return res
         .status(400)
@@ -69,7 +75,7 @@ async function authorization1(req, res, next) {
       return res.status(400).send({ status: false, message: "invalid bookId" });
     }
 
-    const userDocument = await bookModel.findOne({ _id: Id, isDeleted:false });
+    const userDocument = await bookModel.findOne({ _id: Id, isDeleted: false });
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "book not found" });
     }
