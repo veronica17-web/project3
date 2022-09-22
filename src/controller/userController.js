@@ -55,6 +55,8 @@ const createUser = async function (req, res) {
     if (data.hasOwnProperty("address")) {
       const addressKeys = ["street", "city", "pincode"];
       for (field of addressKeys)
+      if(data.address.hasOwnProperty(field))
+     
         if (!isValid(data.address[field])) {
           return res
             .status(400)
