@@ -22,4 +22,10 @@ router.get(
   authContoller.authentication,
   bookController.getBooks
 );
+router.put(
+  "/books/:bookId",
+  authContoller.authentication,
+  authContoller.authorization1,
+  bookController.updateBook
+);
 module.exports = router;

@@ -1,6 +1,6 @@
 const userModel = require("../models/userModel");
 const bookModel = require("../models/bookModel");
-const { isValid, checkISBN } = require("../validation/validator");
+const { isValid, checkISBN, checkDate } = require("../validation/validator");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -60,6 +60,12 @@ async function createBook(req, res) {
       return res
         .status(400)
         .send({ status: false, message: "ISBN is already exists" });
+    }
+
+    if (!checkDate(data.releasedAt)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "Date format must be in YYYY-MM-DD" });
     }
 
     const savedData = await bookModel.create(data);
@@ -147,4 +153,59 @@ const getBooks = async function (req, res) {
   }
 };
 
-module.exports = { createBook, fetchbooks, getBooks };
+//===============================updateBook========================================//
+
+async function updateBook(req, res) {
+  const Id = req.params.bookId;
+  const data = req.body;
+  if (Object.keys(data).length == 0) {
+    return res.status(400).send({ status: false, message: "require data" });
+  }
+  const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
+  for (field of requiredFields) {
+    if (data.hasOwnProperty(field)) {
+      if (field === "releasedAt") {
+        if (!checkDate(data.releasedAt)) {
+          return res
+            .status(400)
+            .send({
+              status: false,
+              message: "Date format must be in YYYY-MM-DD",
+            });
+        }
+      }
+      if (field === "ISBN") {
+        if (!checkISBN(data.ISBN)) {
+          return res
+            .status(400)
+            .send({ status: false, message: "invalid ISBN" });
+        }
+      }
+      const emp = {};
+      emp[field] = data[field];
+      const document = await bookModel.findOne(emp);
+      if (document) {
+        return res
+          .status(400)
+          .send({ status: false, message: `${field} is already exists` });
+      }
+    }
+  }
+  const updateBook = await bookModel.findByIdAndUpdate(
+    { _id: Id, isDeleted: false },
+    data,
+    {
+      new: true,
+    }
+  );
+  if (!updateBook) {
+    return res
+      .status(404)
+      .send({ status: false, message: "No documents founded or deleted" });
+  }
+  return res
+    .status(200)
+    .send({ status: true, msg: "Books list", data: updateBook });
+}
+
+module.exports = { createBook, fetchbooks, getBooks, updateBook };

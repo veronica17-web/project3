@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 const mongoose = require("mongoose");
+const bookModel = require("../models/bookModel");
 const ObjectId = mongoose.Types.ObjectId;
 
 async function authentication(req, res, next) {
@@ -53,4 +54,35 @@ async function authorization(req, res, next) {
   }
 }
 
-module.exports = { authentication, authorization };
+async function authorization1(req, res, next) {
+  try {
+    const userId = req.decoded.userId;
+    const Id = req.params.bookId;
+    if (Id === ":bookId") {
+      return res
+        .status(400)
+        .send({ status: false, message: "bookId is required" });
+    }
+
+    if (!ObjectId.isValid(Id)) {
+      return res.status(400).send({ status: false, message: "invalid bookId" });
+    }
+
+    const userDocument = await bookModel.findOne({ _id: Id });
+    if (!userDocument) {
+      return res.status(404).send({ status: false, message: "book not found" });
+    }
+    
+    const pathUserId = userDocument.userId.toString();
+    if (userId !== pathUserId) {
+      return res
+        .status(403)
+        .send({ status: false, message: "user not authorized" });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).send({ status: false, msg: error.message });
+  }
+}
+
+module.exports = { authentication, authorization, authorization1 };

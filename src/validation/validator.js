@@ -37,6 +37,12 @@ function checkISBN(str) {
   return ISBNRegex.test(str);
 }
 
+function checkDate(str) {
+  var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  return dateRegex.test(str);
+}
+
+
 module.exports = {
   isValid,
   isMobileNumber,
@@ -45,4 +51,5 @@ module.exports = {
   checkPassword,
   checkname,
   checkISBN,
+  checkDate,
 };
