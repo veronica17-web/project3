@@ -58,16 +58,17 @@ const createUser = async function (req, res) {
       if(data.address.hasOwnProperty(field))
      
         if (!isValid(data.address[field])) {
-          return res
+         if (!isValidPincode(data.address.pincode))
+          {return res
             .status(400)
             .send({ status: false, message: `${field} is invalid` });
-        }
+        }}
 
-      if (!isValidPincode(data.address.pincode)) {
-        return res
-          .status(400)
-          .send({ status: false, message: "pincode is invalid" });
-      }
+      // if (!isValidPincode(data.address.pincode)) {
+      //   return res
+      //     .status(400)
+      //     .send({ status: false, message: "pincode is invalid" });
+      // }
     }
 
     if (!isMobileNumber(data.phone)) {
