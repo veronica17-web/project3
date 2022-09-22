@@ -50,12 +50,12 @@ async function authorization(req, res, next) {
         .status(400)
         .send({ status: false, message: "userId is invalid" });
     }
-    
+
     const Id = req.body.userId;
     if (!ObjectId.isValid(Id)) {
       return res
         .status(400)
-        .send({ status: false, message: "invalid ObjectId" });
+        .send({ status: false, message: "Given userId is an invalid ObjectId" });
     }
 
     const userDocument = await userModel.findOne({ _id: data.userId });
