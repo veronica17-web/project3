@@ -28,4 +28,7 @@ router.put(
   authContoller.authorization1,
   bookController.updateBook
 );
+router.delete("/books/:bookId",  authContoller.authentication,
+authContoller.authorization1,
+bookController.deleteBook)
 module.exports = router;

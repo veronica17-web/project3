@@ -208,4 +208,17 @@ async function updateBook(req, res) {
     .send({ status: true, msg: "Books list", data: updateBook });
 }
 
-module.exports = { createBook, fetchbooks, getBooks, updateBook };
+//=================================================================
+const deleteBook= async function( req, res){
+
+  const Id = req.params.bookId;
+
+   await bookModel.findByIdAndUpdate({_id:Id},{$set:{isDeleted:true , deletedAt:new Date()}})
+  return res
+    .status(200)
+    .send({ status: true, message:" deleted successfully" });
+
+}
+
+
+module.exports = { createBook, fetchbooks, getBooks, updateBook ,deleteBook};

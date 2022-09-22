@@ -68,7 +68,7 @@ async function authorization1(req, res, next) {
       return res.status(400).send({ status: false, message: "invalid bookId" });
     }
 
-    const userDocument = await bookModel.findOne({ _id: Id });
+    const userDocument = await bookModel.findOne({ _id: Id, isDeleted:false });
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "book not found" });
     }
