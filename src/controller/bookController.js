@@ -156,69 +156,75 @@ const getBooks = async function (req, res) {
 //===============================updateBook========================================//
 
 async function updateBook(req, res) {
-  const Id = req.params.bookId;
-  const data = req.body;
-  if (Object.keys(data).length == 0) {
-    return res.status(400).send({ status: false, message: "require data" });
-  }
-  const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
-  for (field of requiredFields) {
-    if (data.hasOwnProperty(field)) {
-      if (field === "releasedAt") {
-        if (!checkDate(data.releasedAt)) {
-          return res
-            .status(400)
-            .send({
+  try {
+    const Id = req.params.bookId;
+    const data = req.body;
+    if (Object.keys(data).length == 0) {
+      return res.status(400).send({ status: false, message: "require data" });
+    }
+    const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
+    for (field of requiredFields) {
+      if (data.hasOwnProperty(field)) {
+        if (field === "releasedAt") {
+          if (!checkDate(data.releasedAt)) {
+            return res.status(400).send({
               status: false,
               message: "Date format must be in YYYY-MM-DD",
             });
+          }
         }
-      }
-      if (field === "ISBN") {
-        if (!checkISBN(data.ISBN)) {
+        if (field === "ISBN") {
+          if (!checkISBN(data.ISBN)) {
+            return res
+              .status(400)
+              .send({ status: false, message: "invalid ISBN" });
+          }
+        }
+        const emp = {};
+        emp[field] = data[field];
+        const document = await bookModel.findOne(emp);
+        if (document) {
           return res
             .status(400)
-            .send({ status: false, message: "invalid ISBN" });
+            .send({ status: false, message: `${field} is already exists` });
         }
       }
-      const emp = {};
-      emp[field] = data[field];
-      const document = await bookModel.findOne(emp);
-      if (document) {
-        return res
-          .status(400)
-          .send({ status: false, message: `${field} is already exists` });
+    }
+    const updateBook = await bookModel.findByIdAndUpdate(
+      { _id: Id, isDeleted: false },
+      data,
+      {
+        new: true,
       }
+    );
+    if (!updateBook) {
+      return res
+        .status(404)
+        .send({ status: false, message: "No documents founded or deleted" });
     }
-  }
-  const updateBook = await bookModel.findByIdAndUpdate(
-    { _id: Id, isDeleted: false },
-    data,
-    {
-      new: true,
-    }
-  );
-  if (!updateBook) {
     return res
-      .status(404)
-      .send({ status: false, message: "No documents founded or deleted" });
+      .status(200)
+      .send({ status: true, msg: "Books list", data: updateBook });
+  } catch (error) {
+    return res.status(500).send({ status: false, msg: error.message });
   }
-  return res
-    .status(200)
-    .send({ status: true, msg: "Books list", data: updateBook });
 }
 
-//=================================================================
-const deleteBook= async function( req, res){
+//===========================deleteBook======================================//
 
-  const Id = req.params.bookId;
+const deleteBook = async function (req, res) {
+  try {
+    const Id = req.params.bookId;
+    await bookModel.findByIdAndUpdate(
+      { _id: Id },
+      { $set: { isDeleted: true, deletedAt: new Date() } }
+    );
+    return res
+      .status(200)
+      .send({ status: true, message: " deleted successfully" });
+  } catch (error) {
+    return res.status(500).send({ status: false, msg: error.message });
+  }
+};
 
-   await bookModel.findByIdAndUpdate({_id:Id},{$set:{isDeleted:true , deletedAt:new Date()}})
-  return res
-    .status(200)
-    .send({ status: true, message:" deleted successfully" });
-
-}
-
-
-module.exports = { createBook, fetchbooks, getBooks, updateBook ,deleteBook};
+module.exports = { createBook, fetchbooks, getBooks, updateBook, deleteBook };

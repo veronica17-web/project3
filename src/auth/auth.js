@@ -58,7 +58,8 @@ async function authorization1(req, res, next) {
   try {
     const userId = req.decoded.userId;
     const Id = req.params.bookId;
-    if (Id === ":bookId") {
+    console.log(Id)
+    if (Id === ":bookId" || Id) {
       return res
         .status(400)
         .send({ status: false, message: "bookId is required" });
@@ -72,7 +73,7 @@ async function authorization1(req, res, next) {
     if (!userDocument) {
       return res.status(404).send({ status: false, message: "book not found" });
     }
-    
+
     const pathUserId = userDocument.userId.toString();
     if (userId !== pathUserId) {
       return res
