@@ -10,19 +10,19 @@ async function createReview(req, res) {
   try {
     const id = req.params.bookId;
     if (id === ":bookId") {
-      return res.status(404).send({
+      return res.status(400).send({
         status: false,
         message: "bookId is required",
       });
     } else {
       if (!ObjectId.isValid(id)) {
-        return res.status(404).send({
+        return res.status(400).send({
           status: false,
           message: "Given bookId is an invalid ObjectId",
         });
       }
     }
-    const bookDocument = await bookModel.findById({
+    const bookDocument = await bookModel.findOne({
       _id: id,
       isDeleted: false,
     });
@@ -38,7 +38,7 @@ async function createReview(req, res) {
     if (Object.keys(data).length == 0) {
       return res.status(400).send({
         status: false,
-        message: "reqiured data to create the review",
+        message: "reqiured atleast rating to create a review",
       });
     }
 
@@ -53,20 +53,27 @@ async function createReview(req, res) {
       }
     }
 
-    const requiredKeys = ["rating", "review"];
-    for (field of requiredKeys) {
-      for (key in data) {
-        if (key === "reviewedBy" || key === "reviewedAt") {
-          continue;
-        }
-        if (!data.hasOwnProperty(field)) {
-          return res.status(400).send({
-            status: false,
-            message: `${field} is required`,
-          });
-        }
-      }
-    }
+    // const requiredKeys = ["rating", "review"];
+    // for (field of requiredKeys) {
+    //   for (key in data) {
+    //     if (key === "reviewedBy" || key === "reviewedAt") {
+    //       continue;
+    //     }
+    //     if (!data.hasOwnProperty(field)) {
+    //       return res.status(400).send({
+    //         status: false,
+    //         message: `${field} is required`,
+    //       });
+    //     }
+    //   }
+    // }
+
+    // if (!data.hasOwnProperty("rating")) {
+    //   return res.status(400).send({
+    //     status: false,
+    //     message: "rating is required",
+    //   });
+    // }
 
     for (field of requiredFields) {
       if (field === "rating") {
@@ -106,7 +113,7 @@ async function createReview(req, res) {
     await reviewModel.create(data);
     const reviewDocuments = await reviewModel.find({ bookId: id });
     let bookcolection = await bookModel
-      .findByIdAndUpdate(
+      .findOneAndUpdate(
         { _id: id, isDeleted: false },
         { reviews: reviewDocuments.length },
         { new: true }
@@ -157,15 +164,15 @@ let updateReview = async function (req, res) {
         message: "reqiured data to update the reviews",
       });
     }
-    const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
+    const requiredFields = ["reviewedBy", "rating", "review"];
 
     for (key in data) {
       if (!requiredFields.includes(key)) {
         return res.status(400).send({
           status: false,
-          message: `keys must be among ${requiredFields
-            .splice(1)
-            .join(", ")} to update review`,
+          message: `keys must be among ${requiredFields.join(
+            ", "
+          )} to update review`,
         });
       }
     }
@@ -197,7 +204,7 @@ let updateReview = async function (req, res) {
     }
 
     let BookDoc = await bookModel
-      .findById({ _id: bookId, isDeleted: false })
+      .findOne({ _id: bookId, isDeleted: false })
       .lean();
     if (!BookDoc) {
       return res.status(400).send({
@@ -206,7 +213,7 @@ let updateReview = async function (req, res) {
       });
     }
 
-    let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate(
+    let UpdatedReviewDoc = await reviewModel.findOneAndUpdate(
       { _id: reviewId, isDeleted: false },
       data,
       { new: true }
@@ -219,7 +226,7 @@ let updateReview = async function (req, res) {
     }
 
     BookDoc.reviewsData = [UpdatedReviewDoc];
-    return res.status(201).send({
+    return res.status(200).send({
       status: true,
       message: "Success",
       data: BookDoc,
@@ -255,7 +262,7 @@ const deleteReview = async function (req, res) {
       }
     }
 
-    let reviewdata = await reviewModel.findByIdAndUpdate(
+    let reviewdata = await reviewModel.findOneAndUpdate(
       { _id: reviewId, isDeleted: false },
       { isDeleted: true }
     );
@@ -268,7 +275,7 @@ const deleteReview = async function (req, res) {
 
     let reviewDocuments = await reviewModel.find({ bookId, isDeleted: false });
 
-    let bookDocument = await bookModel.findByIdAndUpdate(
+    let bookDocument = await bookModel.findOneAndUpdate(
       { _id: bookId, isDeleted: false },
       { reviews: reviewDocuments.length }
     );

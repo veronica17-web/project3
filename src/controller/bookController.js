@@ -137,7 +137,7 @@ const getBooks = async function (req, res) {
 
     const reviewDocuments = await reviewModel.find({ bookId: id });
     let bookcolection = await bookModel
-      .findByIdAndUpdate(
+      .findOneAndUpdate(
         { _id: id, isDeleted: false },
         { reviews: reviewDocuments.length },
         { new: true }
@@ -210,7 +210,7 @@ async function updateBook(req, res) {
       });
     }
 
-    const updateBook = await bookModel.findByIdAndUpdate(
+    const updateBook = await bookModel.findOneAndUpdate(
       { _id: Id, isDeleted: false },
       data,
       {
@@ -235,7 +235,7 @@ async function updateBook(req, res) {
 const deleteBook = async function (req, res) {
   try {
     const Id = req.params.bookId;
-    await bookModel.findByIdAndUpdate(
+    await bookModel.findOneAndUpdate(
       { _id: Id, isDeleted: false },
       { $set: { isDeleted: true, deletedAt: new Date() } }
     );
