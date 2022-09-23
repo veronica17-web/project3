@@ -95,5 +95,47 @@ async function createReview(req, res) {
     return res.status(500).send({ msg: err.message });
   }
 }
+//======================================================================================//
 
-module.exports = { createReview };
+let updateReview = async function (req, res) {
+  try {
+    let bookId = req.params.bookId
+    let reviewId = req.params.reviewId
+    let ids = [":bookId", ":reviewId"]
+    let reqIds = [bookId, reviewId]
+    for (field of ids) {
+      for (elm of reqIds) {
+        if (elm === field) {
+          return res.status(404).send({
+            status: false,
+            message: `${elm} is required`,
+          });
+        } else {
+          if (!ObjectId.isValid(elm)) {
+            return res.status(404).send({
+              status: false,
+              message: `Given ${field} is an invalid ObjectId`,
+            });
+          }
+        }
+      }
+    }
+
+    let data = req.body
+
+
+    let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate({ _id: reviewId, isDeleted: false }, data, { new: true })
+
+    let BookDoc = await bookModel.findById({ _id: bookId }).lean()
+    BookDoc.reviewsData = [UpdatedReviewDoc]
+    return res.status(201).send({
+      status: true,
+      message: "Success",
+      data: BookDoc,
+    });
+  } catch (err) {
+    return res.status(500).send({ msg: err.message });
+  }
+}
+
+module.exports = { createReview, updateReview };
