@@ -22,7 +22,7 @@ async function createReview(req, res) {
     }
     const bookDocument = await bookModel
       .findById({ _id: id, isDeleted: false })
-      .lean();
+    
     if (!bookDocument) {
       return res.status(404).send({
         status: false,
@@ -31,7 +31,7 @@ async function createReview(req, res) {
     }
 
     const data = req.body;
-    if(Object.keys(data).length==0){
+    if (Object.keys(data).length == 0) {
       return res.status(400).send({
         status: false,
         message: "reqiured data to create the review",
@@ -90,8 +90,10 @@ async function createReview(req, res) {
     data.bookId = id;
     await reviewModel.create(data);
     const reviewDocuments = await reviewModel.find({ bookId: id });
-    bookDocument.reviewsData = [...reviewDocuments];
-    bookDocument.reviews = reviewDocuments.length;
+    let bookcolection=await bookModel.findByIdAndUpdate({ _id: id, isDeleted: false },{reviews:reviewDocuments.length},{new:true}).lean()
+    bookcolection.reviewsData = [...reviewDocuments];
+    
+    
     return res.status(201).send({
       status: true,
       message: "Success",
@@ -130,7 +132,7 @@ let updateReview = async function (req, res) {
     // }
 
     let data = req.body;
-    if(Object.keys(data).length==0){
+    if (Object.keys(data).length == 0) {
       return res.status(400).send({
         status: false,
         message: "reqiured data to update the reviews",
@@ -193,4 +195,41 @@ let updateReview = async function (req, res) {
   }
 };
 
-module.exports = { createReview, updateReview };
+const deletereview = async function (req, res) {
+  try {
+    let reviewId = req.params.reviewId
+    let bookId = req.params.bookId
+
+
+
+    let reviewdata = await reviewModel.findByIdAndUpdate({ _id: reviewId }, { isDeleted: true })
+    if (!reviewdata) {
+      return res.status(400).send({
+        status: false,
+        message: "no review are found",
+      })}
+
+
+    let reviewDocuments = await reviewModel.find({ bookId, isDeleted: false })
+
+
+
+    let bookDocument = await bookModel.findByIdAndUpdate({ _id: bookId }, { reviews: reviewDocuments.length })
+    if (!bookDocument) {
+      return res.status(400).send({
+        status: false,
+        message: "no book are found",
+      })}
+
+    return res
+      .status(200)
+      .send({ status: true, message: " deleted successfully" });
+  } catch (error) {
+    return res.status(500).send({ status: false, msg: error.message });
+  }
+
+
+}
+
+module.exports = { createReview, updateReview ,deletereview};
+
