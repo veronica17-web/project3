@@ -99,13 +99,15 @@ async function createReview(req, res) {
 
 let updateReview = async function (req, res) {
   try {
-    let bookId = req.params.bookId
-    let reviewId = req.params.reviewId
-    let ids = [":bookId", ":reviewId"]
-    let reqIds = [bookId, reviewId]
-    for (field of ids) {
-      for (elm of reqIds) {
-        if (elm === field) {
+    let bookId = req.params.bookId;
+    let reviewId = req.params.reviewId;
+    let reqIds = [
+      [bookId, ":bookId"],
+      [reviewId, ":reviewId"],
+    ];
+    for (let i = 0; i < reqIds.length; i++) {
+      for (let j = 0; j < reqIds[i].length; j++) {
+        if ( reqIds[i][j]=== field) {
           return res.status(404).send({
             status: false,
             message: `${elm} is required`,
@@ -121,13 +123,16 @@ let updateReview = async function (req, res) {
       }
     }
 
-    let data = req.body
+    let data = req.body;
 
+    let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate(
+      { _id: reviewId, isDeleted: false },
+      data,
+      { new: true }
+    );
 
-    let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate({ _id: reviewId, isDeleted: false }, data, { new: true })
-
-    let BookDoc = await bookModel.findById({ _id: bookId }).lean()
-    BookDoc.reviewsData = [UpdatedReviewDoc]
+    let BookDoc = await bookModel.findById({ _id: bookId }).lean();
+    BookDoc.reviewsData = [UpdatedReviewDoc];
     return res.status(201).send({
       status: true,
       message: "Success",
@@ -136,6 +141,6 @@ let updateReview = async function (req, res) {
   } catch (err) {
     return res.status(500).send({ msg: err.message });
   }
-}
+};
 
 module.exports = { createReview, updateReview };
