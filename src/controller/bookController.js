@@ -156,7 +156,9 @@ async function updateBook(req, res) {
     const Id = req.params.bookId;
     const data = req.body;
     if (Object.keys(data).length == 0) {
-      return res.status(400).send({ status: false, message: "require data" });
+      return res
+        .status(400)
+        .send({ status: false, message: "require data to update" });
     }
     const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
     for (key in data) {
@@ -169,7 +171,7 @@ async function updateBook(req, res) {
     }
 
     const errors = [];
-    
+
     const Fields = ["title", "ISBN", "releasedAt"];
     for (field of Fields) {
       if (data.hasOwnProperty(field)) {

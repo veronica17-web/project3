@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require("../controller/userController");
 const bookController = require("../controller/bookController");
 const authContoller = require("../auth/auth");
+const reviewController=require("../controller/reviewController")
 
 router.get("/test-me", function (req, res) {
   res.send("this is successfully created");
@@ -34,4 +35,5 @@ router.delete(
   authContoller.authorization1,
   bookController.deleteBook
 );
+router.post("/books/:bookId/review",reviewController.createReview)
 module.exports = router;

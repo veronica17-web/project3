@@ -86,9 +86,7 @@ async function authorization1(req, res, next) {
 
     if (Id === ":bookId") {
       errors.push("bookId is required");
-    }
-
-    if (Id !== ":bookId") {
+    } else {
       if (!ObjectId.isValid(Id)) {
         errors.push("Given bookId is an invalid ObjectId");
       }
