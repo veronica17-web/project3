@@ -31,6 +31,12 @@ async function createReview(req, res) {
     }
 
     const data = req.body;
+    if(Object.keys(data).length==0){
+      return res.status(400).send({
+        status: false,
+        message: "reqiured data to create the review",
+      });
+    }
     const requiredKeys = ["rating", "review"];
     for (field of requiredKeys) {
       for (key in data) {
@@ -101,37 +107,81 @@ let updateReview = async function (req, res) {
   try {
     let bookId = req.params.bookId;
     let reviewId = req.params.reviewId;
-    let reqIds = [
-      [bookId, ":bookId"],
-      [reviewId, ":reviewId"],
-    ];
-    for (let i = 0; i < reqIds.length; i++) {
-      for (let j = 0; j < reqIds[i].length; j++) {
-        if ( reqIds[i][j]=== field) {
-          return res.status(404).send({
+    // let reqIds = [
+    //   [bookId, ":bookId"],
+    //   [reviewId, ":reviewId"],
+    // ];
+    // for (let i = 0; i < reqIds.length; i++) {
+    //   for (let j = 0; j < reqIds[i].length; j++) {
+    //     if ( reqIds[i][j]=== field) {
+    //       return res.status(404).send({
+    //         status: false,
+    //         message: `${elm} is required`,
+    //       });
+    //     } else {
+    //       if (!ObjectId.isValid(elm)) {
+    //         return res.status(404).send({
+    //           status: false,
+    //           message: `Given ${field} is an invalid ObjectId`,
+    //         });
+    //       }
+    //     }
+    //   }
+    // }
+
+    let data = req.body;
+    if(Object.keys(data).length==0){
+      return res.status(400).send({
+        status: false,
+        message: "reqiured data to update the reviews",
+      });
+    }
+    const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
+    for (field of requiredFields) {
+      if (field === "rating") {
+        if (typeof data[field] !== "number") {
+          return res.status(400).send({
             status: false,
-            message: `${elm} is required`,
+            message: "value of rating should be in number",
           });
-        } else {
-          if (!ObjectId.isValid(elm)) {
-            return res.status(404).send({
-              status: false,
-              message: `Given ${field} is an invalid ObjectId`,
-            });
-          }
         }
+        if (!isRating(data[field])) {
+          return res.status(400).send({
+            status: false,
+            message: `${field} must be in between 1-5`,
+          });
+        }
+        continue;
+      }
+      if (data.hasOwnProperty(field)) {
+        if (!isValid(data[field])) {
+          return res.status(400).send({
+            status: false,
+            message: `${field} is invalid`,
+          });
+        }
+
       }
     }
 
-    let data = req.body;
-
+    let BookDoc = await bookModel.findById({ _id: bookId, isDeleted: false }).lean();
+    if (!BookDoc) {
+      return res.status(400).send({
+        status: false,
+        message: "no books are found",
+      })
+    }
     let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate(
       { _id: reviewId, isDeleted: false },
       data,
       { new: true }
     );
-
-    let BookDoc = await bookModel.findById({ _id: bookId }).lean();
+    if (!UpdatedReviewDoc) {
+      return res.status(400).send({
+        status: false,
+        message: "no reviews are found",
+      })
+    }
     BookDoc.reviewsData = [UpdatedReviewDoc];
     return res.status(201).send({
       status: true,
