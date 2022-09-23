@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
-const mongoose = require("mongoose");
 const bookModel = require("../models/bookModel");
+const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const { isValid } = require("../validation/validator");
 
@@ -25,7 +25,7 @@ async function authentication(req, res, next) {
       }
     });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 }
 
@@ -71,7 +71,7 @@ async function authorization(req, res, next) {
     }
     next();
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 }
 
@@ -112,7 +112,7 @@ async function authorization1(req, res, next) {
     }
     next();
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 }
 

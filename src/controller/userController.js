@@ -110,9 +110,9 @@ const createUser = async function (req, res) {
     let saveData = await userModel.create(data);
     return res
       .status(201)
-      .send({ status: true, msg: "success", data: saveData });
+      .send({ status: true, message: "success", data: saveData });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 };
 
@@ -163,9 +163,9 @@ async function login(req, res) {
       },
       "plutonium_project3"
     );
-    return res.status(201).send({ status: true, msg: "success", token: token });
+    return res.status(201).send({ status: true, message: "success", token: token });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 }
 module.exports = { createUser, login };

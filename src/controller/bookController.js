@@ -1,5 +1,6 @@
-const userModel = require("../models/userModel");
+// const userModel = require("../models/userModel");
 const bookModel = require("../models/bookModel");
+const reviewModel = require("../models/reviewModel");
 const { isValid, checkISBN, checkDate } = require("../validation/validator");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
@@ -112,7 +113,7 @@ let fetchbooks = async function (req, res) {
       .status(200)
       .send({ status: true, msg: "Books list", data: getDocs });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 };
 
@@ -134,18 +135,25 @@ const getBooks = async function (req, res) {
       });
     }
 
-    let savedData = await bookModel.findOne({ _id: id }).lean();
-    if (!savedData) {
+    const reviewDocuments = await reviewModel.find({ bookId: id });
+    let bookcolection = await bookModel
+      .findByIdAndUpdate(
+        { _id: id, isDeleted: false },
+        { reviews: reviewDocuments.length },
+        { new: true }
+      )
+      .lean();
+    if (!bookcolection) {
       return res
         .status(404)
-        .send({ status: false, message: "No documents founded" });
+        .send({ status: false, message: "No books are founded" });
     }
-    savedData.reviewsData = [];
+    bookcolection.reviewsData = [...reviewDocuments];
     return res
       .status(200)
-      .send({ status: true, msg: "Books list", data: savedData });
+      .send({ status: true, msg: "Books list", data: bookcolection });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 };
 
@@ -212,13 +220,13 @@ async function updateBook(req, res) {
     if (!updateBook) {
       return res
         .status(404)
-        .send({ status: false, message: "No documents founded or deleted" });
+        .send({ status: false, message: "No books founded" });
     }
     return res
       .status(200)
-      .send({ status: true, msg: "Books list", data: updateBook });
+      .send({ status: true, msg: "Success", data: updateBook });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 }
 
@@ -228,14 +236,14 @@ const deleteBook = async function (req, res) {
   try {
     const Id = req.params.bookId;
     await bookModel.findByIdAndUpdate(
-      { _id: Id },
+      { _id: Id, isDeleted: false },
       { $set: { isDeleted: true, deletedAt: new Date() } }
     );
     return res
       .status(200)
       .send({ status: true, message: " deleted successfully" });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
 };
 

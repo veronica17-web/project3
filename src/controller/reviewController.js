@@ -4,6 +4,8 @@ const { isValid, checkDate, isRating } = require("../validation/validator");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
+//=============================createReview=======================================//
+
 async function createReview(req, res) {
   try {
     const id = req.params.bookId;
@@ -20,9 +22,11 @@ async function createReview(req, res) {
         });
       }
     }
-    const bookDocument = await bookModel
-      .findById({ _id: id, isDeleted: false })
-    
+    const bookDocument = await bookModel.findById({
+      _id: id,
+      isDeleted: false,
+    });
+
     if (!bookDocument) {
       return res.status(404).send({
         status: false,
@@ -37,6 +41,18 @@ async function createReview(req, res) {
         message: "reqiured data to create the review",
       });
     }
+
+    const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
+
+    for (key in data) {
+      if (!requiredFields.includes(key)) {
+        return res.status(400).send({
+          status: false,
+          message: `keys must be among ${requiredFields.join(", ")}`,
+        });
+      }
+    }
+
     const requiredKeys = ["rating", "review"];
     for (field of requiredKeys) {
       for (key in data) {
@@ -52,7 +68,6 @@ async function createReview(req, res) {
       }
     }
 
-    const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
     for (field of requiredFields) {
       if (field === "rating") {
         if (typeof data[field] !== "number") {
@@ -90,46 +105,50 @@ async function createReview(req, res) {
     data.bookId = id;
     await reviewModel.create(data);
     const reviewDocuments = await reviewModel.find({ bookId: id });
-    let bookcolection=await bookModel.findByIdAndUpdate({ _id: id, isDeleted: false },{reviews:reviewDocuments.length},{new:true}).lean()
-    bookcolection.reviewsData = [...reviewDocuments];
-    
-    
+    let bookcolection = await bookModel
+      .findByIdAndUpdate(
+        { _id: id, isDeleted: false },
+        { reviews: reviewDocuments.length },
+        { new: true }
+      )
+      .lean();
+    bookcolection.reviewsData = [...reviewDocuments]; //are we have to send only created review or entire reviews
+
     return res.status(201).send({
       status: true,
       message: "Success",
-      data: bookDocument,
+      data: bookcolection,
     });
   } catch (err) {
-    return res.status(500).send({ msg: err.message });
+    return res.status(500).send({ status: false, message: err.message });
   }
 }
-//======================================================================================//
+
+//=============================updateReview=======================================//
 
 let updateReview = async function (req, res) {
   try {
     let bookId = req.params.bookId;
     let reviewId = req.params.reviewId;
-    // let reqIds = [
-    //   [bookId, ":bookId"],
-    //   [reviewId, ":reviewId"],
-    // ];
-    // for (let i = 0; i < reqIds.length; i++) {
-    //   for (let j = 0; j < reqIds[i].length; j++) {
-    //     if ( reqIds[i][j]=== field) {
-    //       return res.status(404).send({
-    //         status: false,
-    //         message: `${elm} is required`,
-    //       });
-    //     } else {
-    //       if (!ObjectId.isValid(elm)) {
-    //         return res.status(404).send({
-    //           status: false,
-    //           message: `Given ${field} is an invalid ObjectId`,
-    //         });
-    //       }
-    //     }
-    //   }
-    // }
+    const Ids = req.params;
+    const keyIds = Object.keys(Ids);
+    for (let i = 0; i < keyIds.length; i++) {
+      if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
+        return res.status(400).send({
+          status: false,
+          message: `${keyIds[i]} is required`,
+        });
+      }
+    }
+    let reqIds = ["bookId", "reviewId"];
+    for (field of reqIds) {
+      if (!ObjectId.isValid(Ids[field])) {
+        return res.status(400).send({
+          status: false,
+          message: `Given ${field} is an invalid ObjectId`,
+        });
+      }
+    }
 
     let data = req.body;
     if (Object.keys(data).length == 0) {
@@ -139,6 +158,18 @@ let updateReview = async function (req, res) {
       });
     }
     const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
+
+    for (key in data) {
+      if (!requiredFields.includes(key)) {
+        return res.status(400).send({
+          status: false,
+          message: `keys must be among ${requiredFields
+            .splice(1)
+            .join(", ")} to update review`,
+        });
+      }
+    }
+
     for (field of requiredFields) {
       if (field === "rating") {
         if (typeof data[field] !== "number") {
@@ -162,17 +193,19 @@ let updateReview = async function (req, res) {
             message: `${field} is invalid`,
           });
         }
-
       }
     }
 
-    let BookDoc = await bookModel.findById({ _id: bookId, isDeleted: false }).lean();
+    let BookDoc = await bookModel
+      .findById({ _id: bookId, isDeleted: false })
+      .lean();
     if (!BookDoc) {
       return res.status(400).send({
         status: false,
-        message: "no books are found",
-      })
+        message: "no books are founded",
+      });
     }
+
     let UpdatedReviewDoc = await reviewModel.findByIdAndUpdate(
       { _id: reviewId, isDeleted: false },
       data,
@@ -181,9 +214,10 @@ let updateReview = async function (req, res) {
     if (!UpdatedReviewDoc) {
       return res.status(400).send({
         status: false,
-        message: "no reviews are found",
-      })
+        message: "no reviews are founded",
+      });
     }
+
     BookDoc.reviewsData = [UpdatedReviewDoc];
     return res.status(201).send({
       status: true,
@@ -191,45 +225,66 @@ let updateReview = async function (req, res) {
       data: BookDoc,
     });
   } catch (err) {
-    return res.status(500).send({ msg: err.message });
+    return res.status(500).send({ status: false, message: err.message });
   }
 };
 
-const deletereview = async function (req, res) {
+//=============================deleteReview=======================================//
+
+const deleteReview = async function (req, res) {
   try {
-    let reviewId = req.params.reviewId
-    let bookId = req.params.bookId
+    let reviewId = req.params.reviewId;
+    let bookId = req.params.bookId;
+    const Ids = req.params;
+    const keyIds = Object.keys(Ids);
+    for (let i = 0; i < keyIds.length; i++) {
+      if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
+        return res.status(400).send({
+          status: false,
+          message: `${keyIds[i]} is required`,
+        });
+      }
+    }
+    let reqIds = ["bookId", "reviewId"];
+    for (field of reqIds) {
+      if (!ObjectId.isValid(Ids[field])) {
+        return res.status(400).send({
+          status: false,
+          message: `Given ${field} is an invalid ObjectId`,
+        });
+      }
+    }
 
-
-
-    let reviewdata = await reviewModel.findByIdAndUpdate({ _id: reviewId }, { isDeleted: true })
+    let reviewdata = await reviewModel.findByIdAndUpdate(
+      { _id: reviewId, isDeleted: false },
+      { isDeleted: true }
+    );
     if (!reviewdata) {
       return res.status(400).send({
         status: false,
-        message: "no review are found",
-      })}
+        message: "no reviews are founded",
+      });
+    }
 
+    let reviewDocuments = await reviewModel.find({ bookId, isDeleted: false });
 
-    let reviewDocuments = await reviewModel.find({ bookId, isDeleted: false })
-
-
-
-    let bookDocument = await bookModel.findByIdAndUpdate({ _id: bookId }, { reviews: reviewDocuments.length })
+    let bookDocument = await bookModel.findByIdAndUpdate(
+      { _id: bookId, isDeleted: false },
+      { reviews: reviewDocuments.length }
+    );
     if (!bookDocument) {
       return res.status(400).send({
         status: false,
         message: "no book are found",
-      })}
+      });
+    }
 
     return res
       .status(200)
       .send({ status: true, message: " deleted successfully" });
   } catch (error) {
-    return res.status(500).send({ status: false, msg: error.message });
+    return res.status(500).send({ status: false, message: error.message });
   }
+};
 
-
-}
-
-module.exports = { createReview, updateReview ,deletereview};
-
+module.exports = { createReview, updateReview, deleteReview };
