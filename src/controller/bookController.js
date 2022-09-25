@@ -40,7 +40,9 @@ async function createBook(req, res) {
       }
       if (field === "releasedAt") {
         if (!checkDate(data.releasedAt)) {
-          errors.push("Date format must be in YYYY-MM-DD");
+          errors.push(
+            "Date format must be in YYYY-MM-DD and should contain proper date and month"
+          );
         }
       }
       if (["title", "ISBN"].includes(field)) {
@@ -142,7 +144,10 @@ const getBooks = async function (req, res) {
       });
     }
 
-    const reviewDocuments = await reviewModel.find({ bookId: id,isDeleted:false });
+    const reviewDocuments = await reviewModel.find({
+      bookId: id,
+      isDeleted: false,
+    });
     let bookcolection = await bookModel
       .findOneAndUpdate(
         { _id: id, isDeleted: false },
@@ -203,7 +208,9 @@ async function updateBook(req, res) {
         }
         if (field === "releasedAt") {
           if (!checkDate(data.releasedAt)) {
-            errors.push("Date format must be in YYYY-MM-DD and should contain proper date and month");
+            errors.push(
+              "Date format must be in YYYY-MM-DD and should contain proper date and month"
+            );
           }
         }
         if (["title", "ISBN"].includes(field)) {
@@ -224,13 +231,11 @@ async function updateBook(req, res) {
       });
     }
 
-    const updateBook = await bookModel.findOneAndUpdate(
-      { _id: Id, isDeleted: false },
-      data,
-      {
+    const updateBook = await bookModel
+      .findOneAndUpdate({ _id: Id, isDeleted: false }, data, {
         new: true,
-      }
-    ).select({ __v: 0 });
+      })
+      .select({ __v: 0 });
     if (!updateBook) {
       return res
         .status(404)

@@ -77,7 +77,9 @@ async function createReview(req, res) {
         }
         if (field === "reviewedAt") {
           if (!checkDate(data[field])) {
-            errors.push("Date format must be in YYYY-MM-DD");
+            errors.push(
+              "Date format must be in YYYY-MM-DD and should contain proper date and month"
+            );
           }
         }
       }
@@ -256,6 +258,18 @@ const deleteReview = async function (req, res) {
       });
     }
 
+    const bookDoc = await bookModel.findOne({
+      _id: bookId,
+      isDeleted: false,
+    });
+
+    if (!bookDoc) {
+      return res.status(404).send({
+        status: false,
+        message: "book not founded or deleted",
+      });
+    }
+
     let reviewdata = await reviewModel.findOneAndUpdate(
       { _id: reviewId, isDeleted: false },
       { isDeleted: true }
@@ -269,16 +283,10 @@ const deleteReview = async function (req, res) {
 
     let reviewDocuments = await reviewModel.find({ bookId, isDeleted: false });
 
-    let bookDocument = await bookModel.findOneAndUpdate(
+    await bookModel.findOneAndUpdate(
       { _id: bookId, isDeleted: false },
       { reviews: reviewDocuments.length }
     );
-    if (!bookDocument) {
-      return res.status(404).send({
-        status: false,
-        message: "no book founded",
-      });
-    }
 
     return res
       .status(200)
