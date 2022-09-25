@@ -198,7 +198,7 @@ let updateReview = async function (req, res) {
     if (!BookDoc) {
       return res.status(404).send({
         status: false,
-        message: "no books are founded",
+        message: "no book founded",
       });
     }
 

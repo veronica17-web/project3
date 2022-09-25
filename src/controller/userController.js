@@ -33,7 +33,7 @@ const createUser = async function (req, res) {
       }
       if (!isValid(data[field])) {
         if (field === "phone") {
-          errors.push(`${field} number is invalid`);
+          errors.push(`${field} number is invalid(must be in string)`);
           continue;
         }
         errors.push(`${field} is invalid`);
@@ -52,7 +52,7 @@ const createUser = async function (req, res) {
       }
       if (field === "email") {
         if (!isValidEmail(data[field])) {
-          errors.push(`${field} is invalid`);
+          errors.push(`${field} format is invalid`);
           continue;
         }
         let checkEmail = await userModel.findOne({ email: data.email });
@@ -82,19 +82,23 @@ const createUser = async function (req, res) {
     if (data.hasOwnProperty("address")) {
       const addressKeys = ["street", "city", "pincode"];
       if (typeof data.address !== "object") {
-        errors.push("address is invalid");
-      }
-      if (Object.keys(data.address).length === 0) {
-        errors.push(
-          `required atleast an one among these fields ${addressKeys.join(
-            ", "
-          )} to create address of the user`
-        );
+        errors.push("address is invalid(must be in object)");
+      } else {
+        if (Object.keys(data.address).length === 0) {
+          errors.push(
+            `required atleast an one among these fields ${addressKeys.join(
+              ", "
+            )} to create address of the user`
+          );
+        }
       }
       for (field of addressKeys) {
         if (data.address.hasOwnProperty(field)) {
           if (!isValid(data.address[field])) {
-            errors.push(`${field} is invalid`);
+            errors.push(
+              `${field} is invalid(must be in string) and should contain something create address of the user`
+            );
+            continue;
           }
           if (field === "pincode") {
             if (!isValidPincode(data.address[field])) {
@@ -142,13 +146,7 @@ async function login(req, res) {
       }
       if (!isValid(data[field])) {
         errors.push(`${field} is invalid`);
-        // continue;
       }
-      // if (field === "email") {
-      //   if (!isValidEmail(data[field])) {
-      //     errors.push("invalid emailId");
-      //   }
-      // }
     }
 
     if (errors.length > 0) {

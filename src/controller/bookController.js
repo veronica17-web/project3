@@ -82,6 +82,11 @@ let fetchbooks = async function (req, res) {
     for (key in data) {
       if (!requiredFields.includes(key)) {
         errors.push(`filters must be among ${requiredFields.join(", ")}`);
+        continue;
+      }
+      if (data[key] === "") {
+        errors.push(`value of ${key} should contain something`);
+        continue;
       }
       if (key === "userId") {
         if (data.hasOwnProperty(key)) {
