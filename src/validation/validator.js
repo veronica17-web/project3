@@ -39,8 +39,10 @@ function checkISBN(str) {
 }
 
 function checkDate(str) {
-  ``;
-  var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  
+  var dateRegex = /^([0-9]{4})-([1-12]{2})-([1-31]{2})$/;
+
+
   return dateRegex.test(str);
 }
 
@@ -48,6 +50,7 @@ const isRating = function (data) {
   const ratingRegex = /^[1-5]{1}$/;
   return ratingRegex.test(data);
 };
+
 
 module.exports = {
   isValid,

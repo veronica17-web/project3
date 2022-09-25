@@ -31,6 +31,7 @@ async function createBook(req, res) {
         errors.push(
           `value of ${field} must be in string and should contain something`
         );
+        continue;
       }
       if (field === "ISBN") {
         if (!checkISBN(data.ISBN)) {
@@ -141,7 +142,7 @@ const getBooks = async function (req, res) {
       });
     }
 
-    const reviewDocuments = await reviewModel.find({ bookId: id });
+    const reviewDocuments = await reviewModel.find({ bookId: id,isDeleted:false });
     let bookcolection = await bookModel
       .findOneAndUpdate(
         { _id: id, isDeleted: false },
@@ -202,7 +203,7 @@ async function updateBook(req, res) {
         }
         if (field === "releasedAt") {
           if (!checkDate(data.releasedAt)) {
-            errors.push("Date format must be in YYYY-MM-DD");
+            errors.push("Date format must be in YYYY-MM-DD and should contain proper date and month");
           }
         }
         if (["title", "ISBN"].includes(field)) {

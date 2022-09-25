@@ -18,7 +18,7 @@ async function authentication(req, res, next) {
       if (err) {
         return res
           .status(401)
-          .send({ status: false, message: "invalid token" });
+          .send({ status: false, message: "invalid token or token expired" });
       } else {
         req.decoded = decoded;
         next();
