@@ -133,15 +133,10 @@ let updateReview = async function (req, res) {
     for (let i = 0; i < keyIds.length; i++) {
       if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
         errors.push(`${keyIds[i]} is required`);
-      }
-    }
-    let reqIds = ["bookId", "reviewId"];
-    for (field of reqIds) {
-      if (Ids[field] === ":bookId" || Ids[field] === ":reviewId") {
         continue;
       }
-      if (!ObjectId.isValid(Ids[field])) {
-        errors.push(`Given ${field} is an invalid ObjectId`);
+      if (!ObjectId.isValid(Ids[keyIds[i]])) {
+        errors.push(`Given ${keyIds[i]} is an invalid ObjectId`);
       }
     }
 
@@ -239,15 +234,10 @@ const deleteReview = async function (req, res) {
     for (let i = 0; i < keyIds.length; i++) {
       if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
         errors.push(`${keyIds[i]} is required`);
-      }
-    }
-    let reqIds = ["bookId", "reviewId"];
-    for (field of reqIds) {
-      if (Ids[field] === ":bookId" || Ids[field] === ":reviewId") {
         continue;
       }
-      if (!ObjectId.isValid(Ids[field])) {
-        errors.push(`Given ${field} is an invalid ObjectId`);
+      if (!ObjectId.isValid(Ids[keyIds[i]])) {
+        errors.push(`Given ${keyIds[i]} is an invalid ObjectId`);
       }
     }
 
