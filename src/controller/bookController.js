@@ -11,23 +11,9 @@ async function createBook(req, res) {
   try {
     const data = req.body;
 
-    let requiredKeys = [
-      "title",
-      "excerpt",
-      "ISBN",
-      "category",
-      "subcategory",
-      "releasedAt",
-    ];
-    for (field of requiredKeys) {
-      if (!data.hasOwnProperty(field)) {
-        return res
-          .status(400)
-          .send({ status: false, message: `${field} is required` });
-      }
-    }
+    let errors = [];
 
-    const requiredFields = [
+    let requiredFields = [
       "title",
       "excerpt",
       "ISBN",
@@ -36,35 +22,41 @@ async function createBook(req, res) {
       "releasedAt",
     ];
     for (field of requiredFields) {
+      if (!data.hasOwnProperty(field)) {
+        errors.push(`${field} is required in request body to create book`);
+        continue;
+      }
+
       if (!isValid(data[field])) {
-        return res
-          .status(400)
-          .send({ status: false, message: `${field} is invalid` });
+        errors.push(
+          `value of ${field} must be in string and should contain something`
+        );
+      }
+      if (field === "ISBN") {
+        if (!checkISBN(data.ISBN)) {
+          errors.push("invalid ISBN");
+        }
+      }
+      if (field === "releasedAt") {
+        if (!checkDate(data.releasedAt)) {
+          errors.push("Date format must be in YYYY-MM-DD");
+        }
+      }
+      if (["title", "ISBN"].includes(field)) {
+        const emp = {};
+        emp[field] = data[field];
+        const document = await bookModel.findOne(emp);
+        if (document) {
+          errors.push(`${field} is already exists`);
+        }
       }
     }
 
-    const document = await bookModel.findOne({ title: data.title });
-    if (document) {
-      return res
-        .status(400)
-        .send({ status: false, message: "title is already exists" });
-    }
-
-    if (!checkISBN(data.ISBN)) {
-      return res.status(400).send({ status: false, message: "invalid ISBN" });
-    }
-
-    const bookDocument = await bookModel.findOne({ ISBN: data.ISBN });
-    if (bookDocument) {
-      return res
-        .status(400)
-        .send({ status: false, message: "ISBN is already exists" });
-    }
-
-    if (!checkDate(data.releasedAt)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "Date format must be in YYYY-MM-DD" });
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
     }
 
     const savedData = await bookModel.create(data);
@@ -81,15 +73,29 @@ let fetchbooks = async function (req, res) {
   try {
     let data = req.query;
 
+    let errors = [];
+
     const requiredFields = ["userId", "category", "subcategory"];
     for (key in data) {
       if (!requiredFields.includes(key)) {
-        return res.status(400).send({
-          status: false,
-          message: `filters must be among ${requiredFields.join(", ")}`,
-        });
+        errors.push(`filters must be among ${requiredFields.join(", ")}`);
+      }
+      if (key === "userId") {
+        if (data.hasOwnProperty(key)) {
+          if (!ObjectId.isValid(data.userId)) {
+            errors.push("Given userId is an invalid ObjectId");
+          }
+        }
       }
     }
+
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
+    }
+
     data.isDeleted = false;
 
     let getDocs = await bookModel.find(data).select({
@@ -107,11 +113,11 @@ let fetchbooks = async function (req, res) {
     if (getDocs.length == 0) {
       return res
         .status(404)
-        .send({ status: false, message: "No documents founded" });
+        .send({ status: false, message: "No books founded" });
     }
     return res
       .status(200)
-      .send({ status: true, msg: "Books list", data: getDocs });
+      .send({ status: true, message: "Books list", data: getDocs });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -142,6 +148,7 @@ const getBooks = async function (req, res) {
         { reviews: reviewDocuments.length },
         { new: true }
       )
+      .select({ __v: 0 })
       .lean();
     if (!bookcolection) {
       return res
@@ -166,23 +173,28 @@ async function updateBook(req, res) {
     if (Object.keys(data).length == 0) {
       return res
         .status(400)
-        .send({ status: false, message: "require data to update" });
-    }
-    const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
-    for (key in data) {
-      if (!requiredFields.includes(key)) {
-        return res.status(400).send({
-          status: false,
-          message: `keys must be among ${requiredFields.join(", ")} to update`,
-        });
-      }
+        .send({ status: false, message: "require data to update the book" });
     }
 
     const errors = [];
 
-    const Fields = ["title", "ISBN", "releasedAt"];
-    for (field of Fields) {
+    const requiredFields = ["title", "excerpt", "releasedAt", "ISBN"];
+    for (key in data) {
+      if (!requiredFields.includes(key)) {
+        errors.push(
+          `keys must be among ${requiredFields.join(", ")} only to update book`
+        );
+      }
+    }
+
+    for (field of requiredFields) {
       if (data.hasOwnProperty(field)) {
+        if (!isValid(data[field])) {
+          errors.push(
+            `value of ${field} must be in string and should contain something`
+          );
+          continue;
+        }
         if (field === "ISBN") {
           if (!checkISBN(data.ISBN)) {
             errors.push("invalid ISBN");
@@ -192,13 +204,14 @@ async function updateBook(req, res) {
           if (!checkDate(data.releasedAt)) {
             errors.push("Date format must be in YYYY-MM-DD");
           }
-          continue;
         }
-        const emp = {};
-        emp[field] = data[field];
-        const document = await bookModel.findOne(emp);
-        if (document) {
-          errors.push(`${field} is already exists`);
+        if (["title", "ISBN"].includes(field)) {
+          const emp = {};
+          emp[field] = data[field];
+          const document = await bookModel.findOne(emp);
+          if (document) {
+            errors.push(`${field} is already exists`);
+          }
         }
       }
     }
@@ -216,7 +229,7 @@ async function updateBook(req, res) {
       {
         new: true,
       }
-    );
+    ).select({ __v: 0 });
     if (!updateBook) {
       return res
         .status(404)

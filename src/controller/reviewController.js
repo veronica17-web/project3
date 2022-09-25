@@ -42,85 +42,71 @@ async function createReview(req, res) {
       });
     }
 
+    const errors = [];
+
     const requiredFields = ["reviewedBy", "reviewedAt", "rating", "review"];
 
     for (key in data) {
       if (!requiredFields.includes(key)) {
-        return res.status(400).send({
-          status: false,
-          message: `keys must be among ${requiredFields.join(", ")}`,
-        });
+        errors.push(`keys must be among ${requiredFields.join(", ")}`);
       }
     }
 
-    // const requiredKeys = ["rating", "review"];
-    // for (field of requiredKeys) {
-    //   for (key in data) {
-    //     if (key === "reviewedBy" || key === "reviewedAt") {
-    //       continue;
-    //     }
-    //     if (!data.hasOwnProperty(field)) {
-    //       return res.status(400).send({
-    //         status: false,
-    //         message: `${field} is required`,
-    //       });
-    //     }
-    //   }
-    // }
-
-    // if (!data.hasOwnProperty("rating")) {
-    //   return res.status(400).send({
-    //     status: false,
-    //     message: "rating is required",
-    //   });
-    // }
-
     for (field of requiredFields) {
       if (field === "rating") {
+        if (!data.hasOwnProperty("rating")) {
+          errors.push("rating is required");
+          continue;
+        }
         if (typeof data[field] !== "number") {
-          return res.status(400).send({
-            status: false,
-            message: "value of rating should be in number",
-          });
+          errors.push("value of rating should be in number");
+          continue;
         }
         if (!isRating(data[field])) {
-          return res.status(400).send({
-            status: false,
-            message: `${field} must be in between 1-5`,
-          });
+          errors.push(`${field} must be in between 1-5`);
         }
         continue;
       }
+
       if (data.hasOwnProperty(field)) {
         if (!isValid(data[field])) {
-          return res.status(400).send({
-            status: false,
-            message: `${field} is invalid`,
-          });
+          errors.push(
+            `value of ${field} must be in string and should contain something`
+          );
+          continue;
         }
         if (field === "reviewedAt") {
           if (!checkDate(data[field])) {
-            return res.status(400).send({
-              status: false,
-              message: "Date format must be in YYYY-MM-DD",
-            });
+            errors.push("Date format must be in YYYY-MM-DD");
           }
         }
       }
     }
 
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
+    }
+
     data.bookId = id;
     await reviewModel.create(data);
-    const reviewDocuments = await reviewModel.find({ bookId: id });
+    const reviewDocuments = await reviewModel
+      .find({
+        bookId: id,
+        isDeleted: false,
+      })
+      .select({ isDeleted: 0, createdAt: 0, updatedAt: 0, __v: 0 });
     let bookcolection = await bookModel
       .findOneAndUpdate(
         { _id: id, isDeleted: false },
         { reviews: reviewDocuments.length },
         { new: true }
       )
+      .select({ __v: 0 })
       .lean();
-    bookcolection.reviewsData = [...reviewDocuments]; //are we have to send only created review or entire reviews
-
+    bookcolection.reviewsData = [...reviewDocuments];
     return res.status(201).send({
       status: true,
       message: "Success",
@@ -137,23 +123,23 @@ let updateReview = async function (req, res) {
   try {
     let bookId = req.params.bookId;
     let reviewId = req.params.reviewId;
+
+    const errors = [];
+
     const Ids = req.params;
     const keyIds = Object.keys(Ids);
     for (let i = 0; i < keyIds.length; i++) {
       if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
-        return res.status(400).send({
-          status: false,
-          message: `${keyIds[i]} is required`,
-        });
+        errors.push(`${keyIds[i]} is required`);
       }
     }
     let reqIds = ["bookId", "reviewId"];
     for (field of reqIds) {
+      if (Ids[field] === ":bookId" || Ids[field] === ":reviewId") {
+        continue;
+      }
       if (!ObjectId.isValid(Ids[field])) {
-        return res.status(400).send({
-          status: false,
-          message: `Given ${field} is an invalid ObjectId`,
-        });
+        errors.push(`Given ${field} is an invalid ObjectId`);
       }
     }
 
@@ -161,65 +147,66 @@ let updateReview = async function (req, res) {
     if (Object.keys(data).length == 0) {
       return res.status(400).send({
         status: false,
-        message: "reqiured data to update the reviews",
+        message: `${errors.join(", ")},reqiured data to update the reviews`,
       });
     }
     const requiredFields = ["reviewedBy", "rating", "review"];
 
     for (key in data) {
       if (!requiredFields.includes(key)) {
-        return res.status(400).send({
-          status: false,
-          message: `keys must be among ${requiredFields.join(
+        errors.push(
+          `In request body keys must be among ${requiredFields.join(
             ", "
-          )} to update review`,
-        });
+          )} to update review`
+        );
       }
     }
 
     for (field of requiredFields) {
-      if (field === "rating") {
-        if (typeof data[field] !== "number") {
-          return res.status(400).send({
-            status: false,
-            message: "value of rating should be in number",
-          });
-        }
-        if (!isRating(data[field])) {
-          return res.status(400).send({
-            status: false,
-            message: `${field} must be in between 1-5`,
-          });
-        }
-        continue;
-      }
       if (data.hasOwnProperty(field)) {
+        if (field === "rating") {
+          if (typeof data[field] !== "number") {
+            errors.push("value of rating should be in number");
+            continue;
+          }
+          if (!isRating(data[field])) {
+            errors.push(`${field} must be in between 1-5`);
+          }
+          continue;
+        }
         if (!isValid(data[field])) {
-          return res.status(400).send({
-            status: false,
-            message: `${field} is invalid`,
-          });
+          errors.push(
+            `value of ${field} must be in string and should contain something`
+          );
         }
       }
     }
 
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
+    }
+
     let BookDoc = await bookModel
       .findOne({ _id: bookId, isDeleted: false })
+      .select({ __v: 0 })
       .lean();
     if (!BookDoc) {
-      return res.status(400).send({
+      return res.status(404).send({
         status: false,
         message: "no books are founded",
       });
     }
 
-    let UpdatedReviewDoc = await reviewModel.findOneAndUpdate(
-      { _id: reviewId, isDeleted: false },
-      data,
-      { new: true }
-    );
+    let UpdatedReviewDoc = await reviewModel
+      .findOneAndUpdate({ _id: reviewId, isDeleted: false }, data, {
+        new: true,
+      })
+      .select({ isDeleted: 0, createdAt: 0, updatedAt: 0, __v: 0 });
     if (!UpdatedReviewDoc) {
-      return res.status(400).send({
+      return res.status(404).send({
         status: false,
         message: "no reviews are founded",
       });
@@ -242,24 +229,31 @@ const deleteReview = async function (req, res) {
   try {
     let reviewId = req.params.reviewId;
     let bookId = req.params.bookId;
+
+    const errors = [];
+
     const Ids = req.params;
     const keyIds = Object.keys(Ids);
     for (let i = 0; i < keyIds.length; i++) {
       if (Ids[keyIds[i]] === ":bookId" || Ids[keyIds[i]] === ":reviewId") {
-        return res.status(400).send({
-          status: false,
-          message: `${keyIds[i]} is required`,
-        });
+        errors.push(`${keyIds[i]} is required`);
       }
     }
     let reqIds = ["bookId", "reviewId"];
     for (field of reqIds) {
-      if (!ObjectId.isValid(Ids[field])) {
-        return res.status(400).send({
-          status: false,
-          message: `Given ${field} is an invalid ObjectId`,
-        });
+      if (Ids[field] === ":bookId" || Ids[field] === ":reviewId") {
+        continue;
       }
+      if (!ObjectId.isValid(Ids[field])) {
+        errors.push(`Given ${field} is an invalid ObjectId`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).send({
+        status: false,
+        message: `${errors.join(", ")}`,
+      });
     }
 
     let reviewdata = await reviewModel.findOneAndUpdate(
@@ -267,7 +261,7 @@ const deleteReview = async function (req, res) {
       { isDeleted: true }
     );
     if (!reviewdata) {
-      return res.status(400).send({
+      return res.status(404).send({
         status: false,
         message: "no reviews are founded",
       });
@@ -280,9 +274,9 @@ const deleteReview = async function (req, res) {
       { reviews: reviewDocuments.length }
     );
     if (!bookDocument) {
-      return res.status(400).send({
+      return res.status(404).send({
         status: false,
-        message: "no book are found",
+        message: "no book founded",
       });
     }
 

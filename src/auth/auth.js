@@ -36,7 +36,9 @@ async function authorization(req, res, next) {
     const userId = req.decoded.userId;
     const data = req.body;
     if (Object.keys(data).length == 0) {
-      return res.status(400).send({ status: false, message: "require data" });
+      return res
+        .status(400)
+        .send({ status: false, message: "require data to create book" });
     }
 
     if (!data.hasOwnProperty("userId")) {
