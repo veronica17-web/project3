@@ -54,15 +54,15 @@ async function createReview(req, res) {
 
     for (field of requiredFields) {
       if (field === "rating") {
-        if (!data.hasOwnProperty("rating")) {
+        if (!data.hasOwnProperty("rating")) {  // there is no rating key in body send the res or else  checks the type of value in line 61
           errors.push("rating is required");
           continue;
         }
-        if (typeof data[field] !== "number") {
+        if (typeof data[field] !== "number") {  // if type is number it skips and goes to line 65
           errors.push("value of rating should be in number");
           continue;
         }
-        if (!isRating(data[field])) {
+        if (!isRating(data[field])) { 
           errors.push(`${field} must be in between 1-5`);
         }
         continue;
